@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Bir bütünleştirilmiş koda ilişkin Genel Bilgiler aşağıdaki öznitelikler kümesiyle
 // denetlenir. Bütünleştirilmiş kod ile ilişkili bilgileri değiştirmek için
 // bu öznitelik değerlerini değiştirin.
-[assembly: AssemblyTitle("LossDedect")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Loss Dedect")]
+[assembly: AssemblyDescription("Loss Degerlerinizi Kaydedin!")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("HP")]
+[assembly: AssemblyCompany("KZ")]
 [assembly: AssemblyProduct("LossDedect")]
-[assembly: AssemblyCopyright("Copyright © HP 2025")]
+[assembly: AssemblyCopyright("Copyright © KZ 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

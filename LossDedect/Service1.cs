@@ -38,7 +38,7 @@ namespace LossDedect
                 _timer.Elapsed += CheckPacketLoss;
                 _timer.Start();
 
-                WriteLog("İnternet takip servisi başlatıldı.");
+                WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} İnternet takip servisi başlatıldı.");
             }
             catch (Exception ex)
             {
@@ -49,7 +49,7 @@ namespace LossDedect
         protected override void OnStop()
         {
             _timer?.Stop();
-            WriteLog("İnternet takip servisi durduruldu.");
+            WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} İnternet takip servisi durduruldu.");
         }
         private void CheckPacketLoss(object sender, ElapsedEventArgs e)
         {
