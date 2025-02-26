@@ -10,10 +10,8 @@ namespace LossDedect
     public partial class Service1 : ServiceBase
     {
         private Timer _timer;
-        private PerformanceCounter _sentPackets;
-        private PerformanceCounter _lostPackets;
         private const string LogFilePath = "C:\\loss_log.txt";
-        private double _lastPacketLoss = 0; // Önceki paket kaybı değeri
+        private double _lastPacketLoss = 0;
 
         public Service1()
         {
@@ -24,21 +22,11 @@ namespace LossDedect
         {
             try
             {
-                string adapterName = GetNetworkAdapterName();
-                if (adapterName == "Unknown")
-                {
-                    WriteLog("Aktif ağ adaptörü bulunamadı!");
-                    return;
-                }
-
-                _sentPackets = new PerformanceCounter("Network Interface", "Packets Sent/sec", adapterName);
-                _lostPackets = new PerformanceCounter("Network Interface", "Packets Outbound Errors", adapterName);
-
-                _timer = new Timer(1000); // 1 saniyede bir kontrol (Anlık değişimleri yakalamak için)
+                _timer = new Timer(10000); // 10 saniyede bir kontrol
                 _timer.Elapsed += CheckPacketLoss;
                 _timer.Start();
 
-                WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} İnternet takip servisi başlatıldı.");
+                WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - İnternet takip servisi başlatıldı.");
             }
             catch (Exception ex)
             {
@@ -49,55 +37,40 @@ namespace LossDedect
         protected override void OnStop()
         {
             _timer?.Stop();
-            WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} İnternet takip servisi durduruldu.");
+            WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - İnternet takip servisi durduruldu.");
         }
+
         private void CheckPacketLoss(object sender, ElapsedEventArgs e)
         {
-            try
-            {
-                float sent = _sentPackets.NextValue();
-                float lost = _lostPackets.NextValue();
+                Ping ping = new Ping();
+                PingOptions options = new PingOptions { DontFragment = true };
+                byte[] buffer = new byte[32];
+                int timeout = 1000;
+                int packetCount = 4;
+                int lostPackets = 0;
 
-                if (sent > 0)
+                for (int i = 0; i < packetCount; i++)
                 {
-                    double packetLoss = (lost / sent) * 100;
-
-                    // Eğer paket kaybı %1'in üzerine çıktıysa ve önceki değere göre değiştiyse log kaydı yap
-                    if (packetLoss > 1.0 && Math.Abs(packetLoss - _lastPacketLoss) > 0.1)
+                    PingReply reply = ping.Send("www.google.com", timeout, buffer, options);
+                    if (reply.Status != IPStatus.Success)
                     {
-                        WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - Paket Kaybı: %{packetLoss:F2}");
-                        _lastPacketLoss = packetLoss; // En son kayıt edilen değeri güncelle
+                        lostPackets++;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteLog("Paket kaybı kontrol edilirken hata oluştu: " + ex.Message);
-            }
-        }
 
-        private string GetNetworkAdapterName()
-        {
-            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (ni.OperationalStatus == OperationalStatus.Up)
+                double packetLoss = (double)lostPackets / packetCount * 100;
+
+                if (packetLoss > 1.0 && Math.Abs(packetLoss - _lastPacketLoss) > 0.1)
                 {
-                    return ni.Description;
+                    WriteLog($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - Paket Kaybı: %{packetLoss:F2}");
+                    _lastPacketLoss = packetLoss;
                 }
-            }
-            return "Unknown";
         }
 
         private void WriteLog(string message)
         {
-            try
-            {
-                File.AppendAllText(LogFilePath, message + Environment.NewLine);
-            }
-            catch (Exception ex)
-            {
-                EventLog.WriteEntry("InternetMonitorService", "Log yazma hatası: " + ex.Message, EventLogEntryType.Error);
-            }
+        
+                File.AppendAllText(LogFilePath, message + Environment.NewLine);        
         }
     }
 }
